@@ -1,0 +1,28 @@
+
+Build 7:
+CSV, one per sync: 1213 seconds.
+Best case example:
+    3;5;2
+5 bytes
+
+Worst case example:
+    -400;-456:-5643
+15 bytes
+
+
+Build 94:
+16 bits to 2 char: 904 seconds
+
+Best case example:
+Worst case example:
+    potato
+Always 6 bytes:
+
+
+
+42
+
+
+
+BlzSendSyncData:
+    Max length: 255

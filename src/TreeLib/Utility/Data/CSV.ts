@@ -5,6 +5,7 @@ export class CSV {
         for (let i = 0; i < parse.length; i++) {
             if (parse.charAt(i) == delimiter) {
                 values.push(current);
+                current = "";
             } else {
                 current += parse.charAt(i);
             }
