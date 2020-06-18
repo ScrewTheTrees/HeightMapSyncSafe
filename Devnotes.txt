@@ -1,28 +1,32 @@
 
 Build 7:
 CSV, one per sync: 1213 seconds.
-Best case example:
-    3;5;2
-5 bytes
+5 bytes - 15 bytes
 
-Worst case example:
-    -400;-456:-5643
-15 bytes
+Could probably be more performant.
 
 
 Build 94:
 16 bits to 2 char: 904 seconds
+Always 6 bytes;
 
-Best case example:
-Worst case example:
-    potato
-Always 6 bytes:
-
+Data bad as i didnt know about null terminated strings at the time,
+so actual time probably slightly longer.
 
 
-42
+
+Build 157:
+14 bits to 2 char, assemble into 240 chunks: 345 seconds
+240 bytes;
+
+Almost there...
 
 
 
 BlzSendSyncData:
-    Max length: 255
+    * Max length: 255
+    * Is null terminated, so dont use
+    * There is some max quota when sending data, but sending large strings is
+      far more efficient than many strings, so probably some overhead.
+    * Running too much data through this is gonna stop all player interactions.
+    * Only stops the player interactions for the players who is sending the data.

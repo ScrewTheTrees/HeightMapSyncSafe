@@ -1,6 +1,7 @@
 import {Hooks} from "../Hooks";
 import {Entity} from "../Entity";
 import {Logger} from "../Logger";
+import {Encode} from "../Utility/Data/Encode";
 
 export class SafeZ extends Entity {
     private static instance: SafeZ;
@@ -21,6 +22,7 @@ export class SafeZ extends Entity {
     constructor() {
         super();
         BlzTriggerRegisterPlayerSyncEvent(this.onSync, Player(0), this.HEADER, false);
+        BlzTriggerRegisterPlayerSyncEvent(this.onSync, Player(1), this.HEADER, false);
         TriggerAddAction(this.onSync, () => this.onSyncTrigger());
     }
 
@@ -48,39 +50,33 @@ export class SafeZ extends Entity {
     public mapXMax = math.floor(GetRectMaxX(GetEntireMapRect()) / 128);
     public mapYMax = math.floor(GetRectMaxY(GetEntireMapRect()) / 128);
 
-    private readonly offset = 32_000;
-
     public routineFunc() {
         let x = 0;
         let y = 0;
+        let assemble = "";
 
-        xpcall(() => {
-            for (x = this.mapXMin; x <= this.mapXMax; x++) {
-                for (y = this.mapYMin; y <= this.mapYMax; y++) {
-
+        for (x = this.mapXMin; x <= this.mapXMax; x++) {
+            for (y = this.mapYMin; y <= this.mapYMax; y++) {
+                xpcall(() => {
                     MoveLocation(this.loc, x, y);
-                    //GetLocalPlayer
-                    let sx = x + this.offset
-                    let sy = y + this.offset
-                    let sz = GetRandomInt(-800, 800) + this.offset;
 
-                    let wrx = string.char(sx % 256) + string.char((sx >>> 8) % 256);
-                    let wry = string.char(sy % 256) + string.char((sy >>> 8) % 256);
-                    let wrz = string.char(sz % 256) + string.char((sz >>> 8) % 256);
+                    let z = math.floor(GetLocationZ(this.loc));
+                    let wrx = Encode.Int14ToChars(x);
+                    let wry = Encode.Int14ToChars(y);
+                    let wrz = Encode.Int14ToChars(z);
 
-                    //BlzSendSyncData(this.HEADER, wrx + wry + wrz);
-                }
-                coroutine.yield();
+                    assemble += wrx + wry + wrz;
+
+                    if (assemble.length >= 240) {
+                        BlzSendSyncData(this.HEADER, assemble);
+
+                        assemble = "";
+                        coroutine.yield();
+                    }
+                }, Logger.critical)
             }
-        }, Logger.critical)
-
-        let strt = "";
-        for (let i = 0; i < 512; i++) {
-            strt += "a";
         }
-
-        BlzSendSyncData(this.HEADER, strt);
-
+        BlzSendSyncData(this.HEADER, assemble); //Final message
     }
 
     public num = 0;
@@ -88,32 +84,27 @@ export class SafeZ extends Entity {
     step(): void {
         if (!this.isFinished) this.num += this._timerDelay;
         coroutine.resume(this.routine);
-
-        //print(this.num);
-        //print(this.percent);
     }
 
     private onSyncTrigger() {
         let data = BlzGetTriggerSyncData();
 
-        let x: number = (string.byte(data.charAt(0)) + (string.byte(data.charAt(1)) << 8)) - this.offset;
-        let y: number = (string.byte(data.charAt(2)) + (string.byte(data.charAt(3)) << 8)) - this.offset;
-        let z: number = (string.byte(data.charAt(4)) + (string.byte(data.charAt(5)) << 8)) - this.offset;
+        for (let i = 0; i <= data.length - 6; i += 6) {
+            xpcall(() => {
+                let x: number = Encode.StringToInt14(data.substr(i, 2));
+                let y: number = Encode.StringToInt14(data.substr(i + 2, 2));
+                let z: number = Encode.StringToInt14(data.substr(i + 4, 2));
 
-        this.percent = (x - this.mapYMin) / (this.mapXMax - this.mapYMin)
+                this.percent = (x - this.mapYMin) / (this.mapXMax - this.mapYMin)
 
-        if (data.length < 6) {
-            Logger.warning("Data less than 6: ", x, y, z, data);
-        }
+                this.mapSet(x, y, z);
 
-        xpcall(() => {
-            TerrainDeformCrater(x * 128, y * 128, 2, z, 1, true);
-        }, (...args) => {
-            Logger.critical(...args);
-        });
-
-        if (x == this.mapXMax && y == this.mapYMax) {
-            this.isFinished = true;
+                if (x == this.mapXMax && y == this.mapYMax) {
+                    this.isFinished = true;
+                }
+            }, (...args) => {
+                Logger.critical(...args);
+            });
         }
 
 
