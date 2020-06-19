@@ -4,8 +4,8 @@ export class Encode {
     private static readonly int14Offset = 8_191;
 
     public static Int16ToChars(num: number): string {
-        let num1 = (num + this.int16Offset) % 256;
-        let num2 = ((num + this.int16Offset >>> 8)) % 256;
+        let num1 = (num + this.int16Offset) % 0x100;
+        let num2 = ((num + this.int16Offset >>> 8)) % 0x100;
 
         return string.char(num1)
             + string.char(num2);
@@ -25,8 +25,8 @@ export class Encode {
     //This is only to allow safe network sending of data, since null terminated strings
     //ruins the string by terminating it early.
     public static Int14ToChars(num: number): string {
-        let num1 = ((num + this.int14Offset) % 128) + 64;
-        let num2 = (((num + this.int14Offset) >>> 7) % 128) + 64;
+        let num1 = ((num + this.int14Offset) % 0x80) + 64;
+        let num2 = (((num + this.int14Offset) >>> 7) % 0x80) + 64;
 
         return string.char(num1)
             + string.char(num2);

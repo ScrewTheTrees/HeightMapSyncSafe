@@ -39,6 +39,13 @@ Build 202:
 
 Very slight speed increase but loses playability.
 
+---------------------------
+Build 218:
+14 bits to 2 char, assemble into 8x8 chunks with x/y/width/height once in header and the rest raw Z data:
+120 seconds.
+128+8 bytes
+
+Addition of interpolation allows for somewhat smooth transitions, ofc not as efficent as GetUnitLocalZ() with exact position.
 
 ---------------------------
 BlzSendSyncData:

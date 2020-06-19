@@ -2,10 +2,11 @@ import {Hooks} from "../Hooks";
 import {Entity} from "../Entity";
 import {Logger} from "../Logger";
 import {Encode} from "../Utility/Data/Encode";
+import {InputManager} from "../InputManager/InputManager";
+import {Interpolation} from "../Utility/Data/Interpolation";
 
 export class SafeZ extends Entity {
     private static instance: SafeZ;
-
 
     public static getInstance() {
         if (this.instance == null) {
@@ -28,12 +29,15 @@ export class SafeZ extends Entity {
     public routine = coroutine.create(() => this.routineFunc());
     public loc: location = Location(0, 0);
     public offset: number = 8;
+    private sfx: effect;
 
     constructor() {
         super();
         BlzTriggerRegisterPlayerSyncEvent(this.onSync, Player(0), this.HEADER, false);
         BlzTriggerRegisterPlayerSyncEvent(this.onSync, Player(1), this.HEADER, false);
         TriggerAddAction(this.onSync, () => this.onSyncTrigger());
+
+        this.sfx = AddSpecialEffect("units\\orc\\SentryWard\\SentryWard", 0, 0);
     }
 
     private mapSet(x: number, y: number, value) {
@@ -43,19 +47,36 @@ export class SafeZ extends Entity {
     }
 
     public GetZ(x: number, y: number) {
-        x = math.floor(x / 128);
-        y = math.floor(y / 128);
-        if (this.heightMap[x] == null) return 0;
-        return this.heightMap[x][y] || 0;
-    }
+        let xxt = x / 128;
+        let yyt = y / 128;
+        let xx = math.floor(xxt);
+        let yy = math.floor(yyt);
 
+        let xDelta = xxt - xx;
+        let yDelta = yyt - yy;
+
+        if (this.heightMap[xx] == null) return 0;
+        if (this.heightMap[xx][yy] == null) return 0;
+        if (this.heightMap[xx + 1] == null) return 0;
+        if (this.heightMap[xx + 1][yy + 1] == null) return 0;
+
+        let topLeft = this.heightMap[xx][yy];
+        let topRight = this.heightMap[xx + 1][yy];
+        let bottomLeft = this.heightMap[xx][yy + 1];
+        let bottomRight = this.heightMap[xx + 1][yy + 1];
+
+        let value = Interpolation.Gradient2D(topLeft, topRight, bottomLeft, bottomRight, xDelta, yDelta);
+
+        //value = topLeft;
+
+        return value || 0;
+    }
 
 
     public routineFunc() {
         let x = 0;
         let y = 0;
         let assemble = "";
-
 
         for (x = this.mapXMin; x <= this.mapXMax; x += this.offset) {
             for (y = this.mapYMin; y <= this.mapYMax; y += this.offset) {
@@ -77,9 +98,9 @@ export class SafeZ extends Entity {
         for (let i = 0; i < width; i++) {
             data[i] = [];
             for (let j = 0; j < height; j++) {
-                MoveLocation(this.loc, (x + i) * 128, (y + j) * 128);
+                MoveLocation(this.loc, ((x + i) * 128), ((y + j) * 128));
                 let z = math.floor(GetLocationZ(this.loc));
-                z = GetRandomInt(-600, 600);
+                //z = GetRandomInt(-600, 600);
                 data[i][j] = z;
             }
         }
@@ -92,8 +113,18 @@ export class SafeZ extends Entity {
         if (!this.isFinished) this.num += this._timerDelay;
         coroutine.resume(this.routine);
 
-        print(this.percent);
         print(this.num);
+        xpcall(() => {
+
+            let mouseCoordinate = InputManager.getLastMouseCoordinate(Player(0));
+            BlzSetSpecialEffectX(this.sfx, mouseCoordinate.x);
+            BlzSetSpecialEffectY(this.sfx, mouseCoordinate.y);
+            BlzSetSpecialEffectZ(this.sfx, this.GetZ(mouseCoordinate.x, mouseCoordinate.y));
+
+            print("GetSyncZ: ", this.GetZ(mouseCoordinate.x, mouseCoordinate.y));
+            MoveLocation(this.loc, mouseCoordinate.x, mouseCoordinate.y);
+            print("LocalZ: ", GetLocationZ(this.loc));
+        }, Logger.critical);
     }
 
     private onSyncTrigger() {
@@ -107,21 +138,13 @@ export class SafeZ extends Entity {
             let width = decompressed.width;
             let height = decompressed.height;
 
-            ClearTextMessages();
-
-            print(y - this.mapYMin, this.mapYMax - this.mapYMin);
-            print(x - this.mapXMin, this.mapXMax - this.mapXMin);
-
             for (let i = 0; i < width; i++) {
                 for (let j = 0; j < height; j++) {
 
                     let value = decompressed.data[i][j];
 
                     this.percent = (x - this.mapXMin) / (this.mapXMax - this.mapXMin)
-                    this.mapSet(i, j, value);
-
-                    TerrainDeformCrater((x + i) * 128, (y + j) * 128, 2, value, 1, true);
-
+                    this.mapSet(x + i, y + j, value);
 
                     if (x + i >= this.mapXMax) {
                         this.isFinished = true;
