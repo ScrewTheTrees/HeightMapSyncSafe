@@ -23,10 +23,10 @@ export class Encode {
     }
 
     //This is only to allow safe network sending of data, since null terminated strings
-    //Ruins the string by terminating it early.
+    //ruins the string by terminating it early.
     public static Int14ToChars(num: number): string {
         let num1 = ((num + this.int14Offset) % 128) + 64;
-        let num2 = (((num + this.int14Offset >>> 7)) % 128) + 64;
+        let num2 = (((num + this.int14Offset) >>> 7) % 128) + 64;
 
         return string.char(num1)
             + string.char(num2);
@@ -42,5 +42,50 @@ export class Encode {
         x -= this.int14Offset;
 
         return x;
+    }
+
+    public static Compress14BitChunk(x: number, y: number, width: number, height: number, data: number[][]) {
+        let assemble = this.Int14ToChars(x);
+        assemble += this.Int14ToChars(y);
+        assemble += this.Int14ToChars(width);
+        assemble += this.Int14ToChars(height);
+
+        for (let i = 0; i < width; i++) {
+            for (let j = 0; j < height; j++) {
+                let input = 0;
+                if (data[i] != null) input = data[i][j] || 0;
+
+                assemble += this.Int14ToChars(input);
+            }
+        }
+
+        return assemble;
+    }
+
+    public static Decompress14BitChunk(data: string) {
+        let x = this.StringToInt14(data.substr(0, 2));
+        let y = this.StringToInt14(data.substr(2, 2));
+        let width = this.StringToInt14(data.substr(4, 2));
+        let height = this.StringToInt14(data.substr(6, 2));
+        let index = 8;
+        let arr: number[][] = [];
+
+        for (let i = 0; i < width; i++) {
+            for (let j = 0; j < height; j++) {
+                let num = this.StringToInt14(data.substr(index, 2));
+                if (arr[i] == null) arr[i] = [];
+                arr[i][j] = num;
+
+                index += 2;
+            }
+        }
+
+        return {
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            data: arr
+        };
     }
 }

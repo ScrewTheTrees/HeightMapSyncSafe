@@ -1,31 +1,49 @@
-
+---------------------------
 Build 7:
-CSV, one per sync: 1213 seconds.
+CSV, one per sync:
+1213 seconds.
 5 bytes - 15 bytes
 
 Could probably be more performant.
 
-
+---------------------------
 Build 94:
-16 bits to 2 char: 904 seconds
+16 bits to 2 char:
+904 seconds
 Always 6 bytes;
 
 Data bad as i didnt know about null terminated strings at the time,
 so actual time probably slightly longer.
 
-
-
+---------------------------
 Build 157:
-14 bits to 2 char, assemble into 240 chunks: 345 seconds
+14 bits to 2 char, assemble into byte chunks of x,y,z:
+345 seconds
 240 bytes;
 
 Almost there...
 
+---------------------------
+Build 200:
+14 bits to 2 char, assemble into 8x8 chunks with x/y/width/height once in header and the rest raw Z data:
+120 seconds.
+128+8 bytes
+
+Playable while syncing as well.
+
+---------------------------
+Build 202:
+14 bits to 2 char, assemble into 11x11 chunks with x/y/width/height once in header and the rest raw Z data:
+108 seconds.
+242+8
+
+Very slight speed increase but loses playability.
 
 
+---------------------------
 BlzSendSyncData:
     * Max length: 255
-    * Is null terminated, so dont use
+    * Is null terminated, so dont use char(0)
     * There is some max quota when sending data, but sending large strings is
       far more efficient than many strings, so probably some overhead.
     * Running too much data through this is gonna stop all player interactions.
