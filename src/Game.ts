@@ -1,6 +1,6 @@
 import {Logger} from "./TreeLib/Logger";
 import {TreeLib} from "./TreeLib/TreeLib";
-import {SafeZ} from "./TreeLib/SafeZ/SafeZ";
+import {SafeZ} from "./SafeZ/SafeZ";
 
 export class Game {
     constructor() {

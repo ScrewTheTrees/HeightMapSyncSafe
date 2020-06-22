@@ -1,9 +1,9 @@
-import {Hooks} from "../Hooks";
-import {Entity} from "../Entity";
-import {Logger} from "../Logger";
-import {Encode} from "../Utility/Data/Encode";
-import {InputManager} from "../InputManager/InputManager";
-import {Interpolation} from "../Utility/Data/Interpolation";
+import {Hooks} from "../TreeLib/Hooks";
+import {Entity} from "../TreeLib/Entity";
+import {Logger} from "../TreeLib/Logger";
+import {Encode} from "../TreeLib/Utility/Data/Encode";
+import {InputManager} from "../TreeLib/InputManager/InputManager";
+import {Interpolation} from "../TreeLib/Utility/Data/Interpolation";
 
 export class SafeZ extends Entity {
     private static instance: SafeZ;
