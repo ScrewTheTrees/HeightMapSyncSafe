@@ -53,5 +53,6 @@ BlzSendSyncData:
     * Is null terminated, so dont use char(0)
     * There is some max quota when sending data, but sending large strings is
       far more efficient than many strings, so probably some overhead.
-    * Running too much data through this is gonna stop all player interactions.
-    * Only stops the player interactions for the players who is sending the data.
+    * Running too much data through this is gonna stop all player interaction
+    * Only stops the player interactions for the players who is sending the data. (Like giving unit orders)
+    * Seems syncronised to the turn timer of the game (100ms / 10fps).
